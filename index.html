@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="description" content="BeatBoss — Music player with addon support">
+  <meta name="theme-color" content="#1DB954">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="BeatBoss">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="apple-touch-icon" href="/icons/icon-192.png">
+  <title>BeatBoss</title>
+
+  <style>
+    /* ── Design tokens ─────────────────────────────────────────────────────── */
+    :root {
+      --primary:    #1DB954;
+      --primary-d:  #17a349;
+      --bg:         #F0F0F3;
+      --bg2:        #FFFFFF;
+      --card:       #FFFFFF;
+      --sidebar:    #E8E8EB;
+      --text:       #111111;
+      --text2:      #666666;
+      --border:     #DDDDDD;
+      --shadow:     rgba(0,0,0,0.08);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+    }
+    [data-theme="dark"] {
+      --bg:     #121212;
+      --bg2:    #1E1E1E;
+      --card:   #1E1E1E;
+      --sidebar:#181818;
+      --text:   #FFFFFF;
+      --text2:  #AAAAAA;
+      --border: #333333;
+      --shadow: rgba(0,0,0,0.4);
+    }
+
+    /* ── Reset ─────────────────────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      height: 100%;
+      overflow: hidden;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* ── Layout ────────────────────────────────────────────────────────────── */
+    #app {
+      display: flex;
+      flex-direction: column;
+      height: 100dvh;
+    }
+
+    #main-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px 16px calc(80px + var(--safe-bottom));
+      -webkit-overflow-scrolling: touch;
+    }
+
+    /* ── Tab bar ───────────────────────────────────────────────────────────── */
+    #tab-bar {
+      display: flex;
+      background: var(--card);
+      border-top: 1px solid var(--border);
+      padding-bottom: var(--safe-bottom);
+      position: relative;
+      z-index: 10;
+    }
+    .tab-btn {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 8px 0 6px;
+      background: none;
+      border: none;
+      color: var(--text2);
+      font-size: 10px;
+      gap: 2px;
+      cursor: pointer;
+      transition: color .15s;
+    }
+    .tab-btn.active { color: var(--primary); }
+    .tab-icon { font-size: 20px; }
+
+    /* ── Player bar ────────────────────────────────────────────────────────── */
+    #player-bar {
+      position: fixed;
+      bottom: calc(56px + var(--safe-bottom));
+      left: 0; right: 0;
+      background: var(--card);
+      border-top: 1px solid var(--border);
+      box-shadow: 0 -2px 12px var(--shadow);
+      display: none;
+      z-index: 20;
+      border-radius: 12px 12px 0 0;
+    }
+    #player-bar.visible { display: block; }
+    .pb-progress { height: 2px; background: var(--border); border-radius: 2px; overflow: hidden; }
+    .pb-progress-fill { height: 100%; background: var(--primary); width: 0; transition: width .25s linear; }
+    .pb-inner { display: flex; align-items: center; padding: 10px 12px; gap: 10px; }
+    .pb-art-wrap img { border-radius: 6px; }
+    .pb-info { flex: 1; min-width: 0; }
+    .pb-title  { display: block; font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .pb-artist { display: block; font-size: 12px; color: var(--text2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .pb-btn { background: none; border: none; font-size: 22px; color: var(--text); cursor: pointer; padding: 6px; border-radius: 50%; }
+    .pb-btn:active { opacity: .6; }
+
+    /* ── Now Playing Sheet ─────────────────────────────────────────────────── */
+    #nowplaying-sheet, #lyrics-sheet, #queue-sheet {
+      position: fixed;
+      inset: 0;
+      background: var(--bg2);
+      z-index: 100;
+      transform: translateY(100%);
+      transition: transform .3s cubic-bezier(.4,0,.2,1);
+      overflow-y: auto;
+      padding: 0 20px calc(20px + var(--safe-bottom));
+      -webkit-overflow-scrolling: touch;
+    }
+    #nowplaying-sheet.open,
+    #lyrics-sheet.open,
+    #queue-sheet.open { transform: translateY(0); }
+
+    .np-header { display: flex; justify-content: center; padding: 16px 0 8px; }
+    .np-close { background: none; border: none; font-size: 28px; color: var(--text2); cursor: pointer; padding: 4px 12px; }
+    .np-art-wrap { display: flex; justify-content: center; margin: 8px 0 24px; }
+    .np-art-wrap img { border-radius: 16px; box-shadow: 0 8px 32px var(--shadow); width: min(260px, 72vw); height: min(260px, 72vw); object-fit: cover; }
+    .np-title-row { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+    .np-meta { flex: 1; min-width: 0; }
+    .np-title  { display: block; font-size: 20px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .np-artist { display: block; font-size: 14px; color: var(--text2); }
+    .np-fav { background: none; border: none; font-size: 24px; cursor: pointer; color: var(--text2); }
+    .np-seek { margin-bottom: 16px; }
+    .np-slider, .np-vol-slider { width: 100%; accent-color: var(--primary); cursor: pointer; }
+    .np-times { display: flex; justify-content: space-between; font-size: 12px; color: var(--text2); margin-top: 4px; }
+    .np-transport { display: flex; align-items: center; justify-content: space-around; margin: 8px 0 16px; }
+    .np-btn { background: none; border: none; font-size: 20px; cursor: pointer; color: var(--text); padding: 8px; border-radius: 50%; }
+    .np-btn.active { color: var(--primary); }
+    .np-big { background: var(--primary); color: #fff; font-size: 22px; width: 56px; height: 56px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+    .np-volume { display: flex; align-items: center; gap: 8px; margin-bottom: 20px; font-size: 16px; }
+    .np-vol-slider { flex: 1; }
+    .np-actions { display: flex; gap: 12px; justify-content: center; }
+    .np-actions button { padding: 8px 20px; border-radius: 20px; border: 1px solid var(--border); background: none; color: var(--text); font-size: 14px; cursor: pointer; }
+    .np-actions button:active { background: var(--card); }
+
+    /* ── Screen titles ─────────────────────────────────────────────────────── */
+    .screen-title { font-size: 28px; font-weight: 800; margin-bottom: 16px; }
+    .section-title { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--text2); margin: 16px 0 8px; }
+
+    /* ── Track tile ────────────────────────────────────────────────────────── */
+    .track-tile { display: flex; align-items: center; gap: 12px; padding: 10px 0; cursor: pointer; border-bottom: 1px solid var(--border); }
+    .track-tile:active { opacity: .7; }
+    .track-info { flex: 1; min-width: 0; }
+    .track-title-row { display: flex; align-items: center; gap: 6px; }
+    .track-title { font-size: 14px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .track-title.playing { color: var(--primary); }
+    .track-artist { display: block; font-size: 12px; color: var(--text2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .track-more-btn { background: none; border: none; font-size: 20px; color: var(--text2); cursor: pointer; padding: 4px 8px; }
+    .hires-badge { font-size: 9px; font-weight: 800; background: var(--primary); color: #fff; border-radius: 3px; padding: 1px 4px; flex-shrink: 0; }
+
+    /* ── Context menu ──────────────────────────────────────────────────────── */
+    .context-menu { background: var(--card); border: 1px solid var(--border); border-radius: 10px; box-shadow: 0 8px 24px var(--shadow); min-width: 160px; overflow: hidden; }
+    .context-menu button { display: block; width: 100%; text-align: left; padding: 12px 16px; border: none; background: none; color: var(--text); font-size: 14px; cursor: pointer; }
+    .context-menu button:hover { background: var(--bg); }
+
+    /* ── Home ──────────────────────────────────────────────────────────────── */
+    .h-scroll { display: flex; gap: 12px; overflow-x: auto; padding-bottom: 8px; -webkit-overflow-scrolling: touch; }
+    .h-scroll::-webkit-scrollbar { display: none; }
+    .recent-card { display: flex; flex-direction: column; gap: 4px; min-width: 90px; cursor: pointer; }
+    .recent-card img { border-radius: 8px; width: 80px; height: 80px; object-fit: cover; }
+    .recent-name   { font-size: 12px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 90px; }
+    .recent-artist { font-size: 11px; color: var(--text2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 90px; }
+    .addon-row-active { display: flex; align-items: center; gap: 8px; padding: 12px; background: var(--card); border-radius: 10px; }
+    .addon-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--primary); }
+    .addon-name { font-weight: 600; font-size: 14px; }
+    .addon-ver  { font-size: 12px; color: var(--text2); margin-left: auto; }
+
+    /* ── Search ────────────────────────────────────────────────────────────── */
+    .search-wrap { margin-bottom: 12px; }
+    .search-input { width: 100%; padding: 12px 16px; border-radius: 12px; border: 1px solid var(--border); background: var(--card); color: var(--text); font-size: 16px; outline: none; }
+    .search-input:focus { border-color: var(--primary); }
+
+    /* ── Library ───────────────────────────────────────────────────────────── */
+    .seg-control { display: flex; gap: 0; background: var(--card); border-radius: 10px; padding: 4px; margin-bottom: 16px; }
+    .seg-btn { flex: 1; padding: 8px; border: none; background: none; color: var(--text2); border-radius: 8px; font-size: 14px; cursor: pointer; }
+    .seg-btn.active { background: var(--bg); color: var(--primary); font-weight: 600; }
+    .lib-row { display: flex; align-items: center; padding: 14px 0; border-bottom: 1px solid var(--border); cursor: pointer; gap: 10px; }
+    .lib-name  { font-size: 15px; font-weight: 500; flex: 1; }
+    .lib-count { font-size: 12px; color: var(--text2); }
+    .lib-delete { background: none; border: none; font-size: 18px; cursor: pointer; color: var(--text2); padding: 4px; }
+    .back-btn { background: none; border: none; color: var(--primary); font-size: 15px; cursor: pointer; margin-bottom: 12px; padding: 0; }
+
+    /* ── Downloads ─────────────────────────────────────────────────────────── */
+    .dl-row { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); cursor: pointer; }
+    .dl-row:active { opacity: .7; }
+    .dl-info { flex: 1; min-width: 0; }
+    .dl-title  { display: block; font-size: 14px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .dl-artist { display: block; font-size: 12px; color: var(--text2); }
+    .dl-size   { display: block; font-size: 11px; color: var(--text2); }
+    .dl-delete { background: none; border: none; font-size: 18px; color: var(--text2); cursor: pointer; padding: 4px 8px; }
+    .dl-progress { width: 100%; height: 4px; margin: 4px 0; accent-color: var(--primary); }
+
+    /* ── Settings ──────────────────────────────────────────────────────────── */
+    .settings-section { margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid var(--border); }
+    .settings-section h3 { font-size: 13px; font-weight: 700; text-transform: uppercase; color: var(--text2); margin-bottom: 12px; letter-spacing: .05em; }
+    .toggle-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; font-size: 15px; cursor: pointer; }
+    .slider-row { display: flex; flex-direction: column; gap: 6px; padding: 10px 0; font-size: 14px; }
+    .slider-row input[type=range] { width: 100%; accent-color: var(--primary); }
+    .text-input { width: 100%; padding: 10px 14px; border: 1px solid var(--border); border-radius: 10px; background: var(--card); color: var(--text); font-size: 15px; margin-bottom: 10px; outline: none; }
+    .text-input:focus { border-color: var(--primary); }
+    .settings-note { font-size: 12px; color: var(--text2); margin-top: 6px; line-height: 1.5; }
+    .eq-bands { display: flex; gap: 8px; justify-content: center; overflow-x: auto; padding-bottom: 4px; }
+    .eq-col { display: flex; flex-direction: column; align-items: center; gap: 4px; min-width: 36px; }
+    .eq-slider { writing-mode: vertical-lr; direction: rtl; width: 28px; height: 80px; accent-color: var(--primary); }
+    .eq-label { font-size: 9px; color: var(--text2); white-space: nowrap; }
+
+    /* ── Addons ────────────────────────────────────────────────────────────── */
+    .addon-install { display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; }
+    .addon-row { background: var(--card); border-radius: 12px; padding: 14px; margin-bottom: 10px; display: flex; flex-direction: column; gap: 8px; }
+    .addon-row.active { border: 1px solid var(--primary); }
+    .addon-row-info { display: flex; align-items: center; gap: 8px; }
+    .addon-type-badge { font-size: 9px; background: var(--primary); color: #fff; border-radius: 3px; padding: 2px 5px; font-weight: 700; }
+    .addon-active-check { color: var(--primary); font-size: 13px; font-weight: 600; }
+    .addon-row-actions { display: flex; gap: 8px; }
+
+    /* ── Lyrics / Queue sheets ─────────────────────────────────────────────── */
+    .sheet-header { display: flex; align-items: center; padding: 16px 0 12px; gap: 12px; }
+    .sheet-close { background: none; border: none; font-size: 20px; color: var(--text2); cursor: pointer; }
+    .sheet-header h3 { flex: 1; font-size: 18px; font-weight: 700; }
+    .lyrics-scroll { padding: 8px 0 40px; }
+    .lyric-line { text-align: center; font-size: 16px; color: var(--text2); padding: 8px 16px; cursor: pointer; line-height: 1.6; transition: color .2s, font-size .2s; }
+    .lyric-line.active { color: var(--primary); font-size: 18px; font-weight: 600; }
+    .queue-list { padding-bottom: 40px; }
+    .queue-row { display: flex; align-items: center; gap: 10px; padding: 12px 0; border-bottom: 1px solid var(--border); cursor: pointer; }
+    .queue-row.current { color: var(--primary); }
+    .q-idx { width: 24px; text-align: right; font-size: 13px; color: var(--text2); flex-shrink: 0; }
+    .q-info { flex: 1; min-width: 0; }
+    .q-title  { display: block; font-size: 14px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .q-artist { display: block; font-size: 12px; color: var(--text2); }
+    .q-remove { background: none; border: none; font-size: 16px; color: var(--text2); cursor: pointer; padding: 4px 8px; }
+
+    /* ── Buttons ───────────────────────────────────────────────────────────── */
+    .btn-primary  { padding: 12px 20px; border-radius: 10px; border: none; background: var(--primary); color: #fff; font-size: 15px; font-weight: 600; cursor: pointer; }
+    .btn-primary:disabled { opacity: .5; }
+    .btn-secondary{ padding: 10px 18px; border-radius: 10px; border: 1px solid var(--border); background: none; color: var(--text); font-size: 14px; cursor: pointer; }
+    .btn-ghost    { padding: 6px 12px; border-radius: 8px; border: 1px solid var(--border); background: none; color: var(--text); font-size: 13px; cursor: pointer; }
+    .error-text   { color: #e05; font-size: 13px; margin-top: 4px; }
+
+    /* ── Empty state ───────────────────────────────────────────────────────── */
+    .empty-state { text-align: center; padding: 48px 24px; color: var(--text2); }
+    .empty-icon  { font-size: 48px; display: block; margin-bottom: 12px; }
+    .empty-title { font-size: 18px; font-weight: 600; color: var(--text); margin-bottom: 6px; }
+    .empty-sub   { font-size: 14px; }
+    .empty-hint  { font-size: 14px; color: var(--text2); padding: 12px 0; }
+
+    /* ── Import overlay ────────────────────────────────────────────────────── */
+    #import-overlay { position: fixed; top: 16px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,.85); color: #fff; padding: 10px 20px; border-radius: 999px; display: none; align-items: center; gap: 10px; font-size: 13px; z-index: 200; white-space: nowrap; }
+    #import-overlay.visible { display: flex; }
+    .import-cancel { background: none; border: none; color: rgba(255,255,255,.7); font-size: 18px; cursor: pointer; }
+
+    /* ── Splash ────────────────────────────────────────────────────────────── */
+    #splash { position: fixed; inset: 0; background: var(--bg); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; z-index: 300; transition: opacity .4s; }
+    #splash.hidden { opacity: 0; pointer-events: none; }
+    .splash-icon { font-size: 64px; }
+    .splash-title { font-size: 32px; font-weight: 800; }
+    .splash-spinner { width: 28px; height: 28px; border: 3px solid var(--border); border-top-color: var(--primary); border-radius: 50%; animation: spin .8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Misc ──────────────────────────────────────────────────────────────── */
+    .spinner { text-align: center; padding: 24px; font-size: 24px; }
+  </style>
+</head>
+<body>
+
+<!-- Splash screen shown while bootstrapping -->
+<div id="splash">
+  <span class="splash-icon">🎵</span>
+  <span class="splash-title">BeatBoss</span>
+  <div class="splash-spinner"></div>
+</div>
+
+<!-- Main app -->
+<div id="app">
+  <main id="main-content" role="main"></main>
+
+  <!-- Player bar (floats above tab bar) -->
+  <div id="player-bar" role="region" aria-label="Now Playing"></div>
+
+  <!-- Tab bar -->
+  <nav id="tab-bar" role="navigation" aria-label="Main navigation"></nav>
+</div>
+
+<!-- Now Playing full-screen sheet -->
+<div id="nowplaying-sheet" role="dialog" aria-label="Now Playing" aria-modal="true"></div>
+
+<!-- Lyrics sheet -->
+<div id="lyrics-sheet" role="dialog" aria-label="Lyrics" aria-modal="true"></div>
+
+<!-- Queue sheet -->
+<div id="queue-sheet" role="dialog" aria-label="Queue" aria-modal="true"></div>
+
+<!-- Import progress overlay -->
+<div id="import-overlay" role="status" aria-live="polite">
+  <span class="import-text"></span>
+  <button class="import-cancel" aria-label="Cancel import">✕</button>
+</div>
+
+<script type="module">
+  import { setupUnlock }      from '/src/ios-audio-unlock.js';
+  import { SettingsStore, HistoryStore, LibraryStore, AddonStore, DownloadStore, PlayerStore, ImportStore } from '/src/store.js';
+  import { AudioEngine }      from '/src/audio-engine.js';
+  import { AudioPlayerService } from '/src/audio-player.js';
+  import { AddonService }     from '/src/addon-service.js';
+  import { LrcLibHandler }    from '/src/lrclib-handler.js';
+  import { LastFmService }    from '/src/lastfm-service.js';
+  import { ImportService }    from '/src/import-service.js';
+  import { DownloadManager }  from '/src/download-manager.js';
+  import { MediaSessionManager } from '/src/media-session.js';
+  import { initAppShell }     from '/src/ui/app-shell.js';
+
+  // iOS audio unlock — must be first
+  setupUnlock();
+
+  // Bootstrap all services
+  const settingsStore = new SettingsStore();
+  const historyStore  = new HistoryStore();
+  const libraryStore  = new LibraryStore();
+  const addonStore    = new AddonStore();
+  const downloadStore = new DownloadStore();
+  const playerStore   = new PlayerStore();
+  const importStore   = new ImportStore();
+
+  await Promise.all([
+    settingsStore.load(),
+    historyStore.load(),
+    libraryStore.load(),
+    addonStore.load(settingsStore),
+    downloadStore.load(),
+  ]);
+
+  const audioEngine    = new AudioEngine();
+  const addonService   = new AddonService(addonStore);
+  await addonService.init();
+  addonService.registerBuiltIn('lrclib', new LrcLibHandler());
+
+  const lastFmService  = new LastFmService(settingsStore);
+  const downloadManager = new DownloadManager(addonService, downloadStore, settingsStore);
+  const audioPlayer    = new AudioPlayerService(
+    audioEngine, addonService, historyStore, lastFmService, playerStore, downloadManager
+  );
+  const importService  = new ImportService(addonService, libraryStore, importStore);
+  const mediaSession   = new MediaSessionManager(audioPlayer);
+  audioPlayer.bindMediaSession(mediaSession);
+
+  // Apply saved EQ bands
+  settingsStore.eqBands.forEach((gain, i) => audioEngine.setEQGain(i, gain));
+  audioEngine.playbackRate = settingsStore.playbackRate;
+
+  // Global app object passed to all UI modules
+  const app = {
+    settingsStore, historyStore, libraryStore, addonStore, downloadStore,
+    playerStore, importStore, audioEngine, addonService, lastFmService,
+    downloadManager, audioPlayer, importService,
+  };
+
+  initAppShell(app);
+
+  // Remove splash
+  const splash = document.getElementById('splash');
+  splash.classList.add('hidden');
+  setTimeout(() => splash.remove(), 400);
+
+  // Service Worker registration
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/sw.js').catch(() => {});
+  }
+</script>
+</body>
+</html>
