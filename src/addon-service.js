@@ -66,9 +66,11 @@ export class AddonService {
     if (!manifest.id || !manifest.name || !manifest.baseUrl) {
       throw new Error('Invalid manifest: missing id, name, or baseUrl');
     }
-    await putAddon(manifest);
+    // AddonStore.install() owns the DB write — don't double-write (Bug 8 fix)
     this._handlers.set(manifest.id, new UserAddonHandler(manifest));
     await this._store.install(manifest);
+    // Auto-activate if this is the first user addon
+    if (!this._store.activeAddonId) this._store.setActive(manifest.id);
     return manifest;
   }
 
@@ -84,7 +86,12 @@ export class AddonService {
 
   _activeHandler() {
     const id = this._store.activeAddonId;
-    return id ? this._handlers.get(id) : [...this._handlers.values()][0] ?? null;
+    if (id) return this._handlers.get(id) ?? null;
+    // Fall back to first user addon only — never fall back to built-ins like lrclib (Bug 2 fix)
+    for (const [hid, h] of this._handlers) {
+      if (hid !== 'lrclib') return h;
+    }
+    return null;
   }
 
   async search(query, signal) {

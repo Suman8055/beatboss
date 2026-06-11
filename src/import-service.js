@@ -2,7 +2,7 @@
 // 3 concurrent searches via Promise.all batching.
 
 const SPOTIFY_WORKER  = 'https://beatboss-spotify.thevolecitor.workers.dev';
-const YOUTUBE_WORKER  = 'https://beatboss-spotify.thevolecitor.workers.dev'; // same worker, different param
+const YOUTUBE_WORKER  = 'https://beatboss-youtube.thevolecitor.workers.dev';
 
 export class ImportService {
   constructor(addonService, libraryStore, importStore) {

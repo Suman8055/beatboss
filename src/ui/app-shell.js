@@ -13,6 +13,7 @@ const TABS = [
   { id: 'search',    label: 'Search',    icon: '🔍' },
   { id: 'library',   label: 'Library',   icon: '🎵' },
   { id: 'downloads', label: 'Downloads', icon: '⬇' },
+  { id: 'addons',    label: 'Addons',    icon: '🧩' },
   { id: 'settings',  label: 'Settings',  icon: '⚙' },
 ];
 

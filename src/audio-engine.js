@@ -26,10 +26,15 @@ export class AudioEngine {
     this.onEnded     = null;   // callback()
     this.onBuffering = null;   // callback(bool)
 
-    this._elA.addEventListener('ended',   () => this.onEnded?.());
-    this._elA.addEventListener('waiting', () => this.onBuffering?.(true));
-    this._elA.addEventListener('playing', () => this.onBuffering?.(false));
-    this._elA.addEventListener('timeupdate', () => this._posUpdate());
+    // Wire both elements at construction — avoids re-adding listeners after crossfade swap (Bug 3 fix)
+    const wire = el => {
+      el.addEventListener('ended',      () => { if (el === this._elA) this.onEnded?.(); });
+      el.addEventListener('waiting',    () => { if (el === this._elA) this.onBuffering?.(true); });
+      el.addEventListener('playing',    () => { if (el === this._elA) this.onBuffering?.(false); });
+      el.addEventListener('timeupdate', () => { if (el === this._elA) this._posUpdate(); });
+    };
+    wire(this._elA);
+    wire(this._elB);
 
     // iOS: don't pause when page hides
     document.addEventListener('visibilitychange', () => {
@@ -120,9 +125,8 @@ export class AudioEngine {
     [this._dashA, this._dashB] = [this._dashB, this._dashA];
     this._gainA.gain.setValueAtTime(1, this._ctx.currentTime);
     this._gainB.gain.setValueAtTime(0, this._ctx.currentTime);
-
-    this._elA.addEventListener('ended', () => this.onEnded?.(), { once: true });
-    this._elA.addEventListener('timeupdate', () => this._posUpdate());
+    // No new listeners needed — both elements were wired in constructor (Bug 3 fix)
+    this._startPosTimer(); // Restart timer explicitly for new _elA (Bug 11 fix)
   }
 
   pause()   { this._elA.pause(); this._stopPosTimer(); }
@@ -156,7 +160,11 @@ export class AudioEngine {
       if (el.src.startsWith('blob:')) URL.revokeObjectURL(el.src);
       el.src = url;
       el.load();
-      if (startPosition > 0) el.currentTime = startPosition;
+      // Wait for metadata before seeking — setting currentTime on HAVE_NOTHING is silently ignored (Bug 5 fix)
+      if (startPosition > 0) {
+        await new Promise(res => el.addEventListener('loadedmetadata', res, { once: true }));
+        el.currentTime = startPosition;
+      }
     }
   }
 

@@ -49,7 +49,8 @@ export class DASHLoader {
   _cancel() {
     this._abort?.abort();
     this._abort = null;
-    if (this._ms && this._ms.readyState === 'open') {
+    // Only call endOfStream if SourceBuffer is not mid-update — prevents InvalidStateError (Bug 10 fix)
+    if (this._ms?.readyState === 'open' && !this._sb?.updating) {
       try { this._ms.endOfStream(); } catch (_) {}
     }
     if (this._audio.src.startsWith('blob:')) {

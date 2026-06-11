@@ -260,6 +260,14 @@
     .empty-sub   { font-size: 14px; }
     .empty-hint  { font-size: 14px; color: var(--text2); padding: 12px 0; }
 
+    /* ── Onboarding banner ─────────────────────────────────────────────────── */
+    .onboarding-banner { display: flex; align-items: center; gap: 14px; background: var(--card); border: 1.5px solid var(--primary); border-radius: 14px; padding: 16px; margin: 8px 0 20px; }
+    .onboarding-icon   { font-size: 32px; flex-shrink: 0; }
+    .onboarding-text   { flex: 1; }
+    .onboarding-text strong { font-size: 15px; font-weight: 700; color: var(--text); display: block; margin-bottom: 4px; }
+    .onboarding-text p { font-size: 13px; color: var(--text2); margin: 0; }
+    .onboarding-btn    { padding: 10px 16px; font-size: 13px; flex-shrink: 0; }
+
     /* ── Import overlay ────────────────────────────────────────────────────── */
     #import-overlay { position: fixed; top: 16px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,.85); color: #fff; padding: 10px 20px; border-radius: 999px; display: none; align-items: center; gap: 10px; font-size: 13px; z-index: 200; white-space: nowrap; }
     #import-overlay.visible { display: flex; }

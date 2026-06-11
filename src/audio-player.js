@@ -226,10 +226,10 @@ export class AudioPlayerService {
   }
 
   _onEnded() {
-    const { loopMode, queue, currentIndex } = this._store;
+    const { loopMode } = this._store;
     if (loopMode === 'one') {
-      this.seek(0);
-      this._engine.resume();
+      // Re-invoke full play() to handle stream re-fetch and iOS resume correctly (Bug 4 fix)
+      this.play(this._store.currentTrack);
     } else {
       this.skipToNext();
     }

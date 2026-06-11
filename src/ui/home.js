@@ -1,4 +1,5 @@
 import { artworkImage } from './components.js';
+import { navigate } from '../router.js';
 
 export function renderHome(app, container) {
   container.innerHTML = '<h2 class="screen-title">Home</h2>';
@@ -38,13 +39,28 @@ export function renderHome(app, container) {
     section.append(scroll);
   }
 
+  // Onboarding banner — shown until first addon is installed (Bug 1 fix)
+  if (addons.length === 0) {
+    const banner = document.createElement('div');
+    banner.className = 'onboarding-banner';
+    banner.innerHTML = `
+      <span class="onboarding-icon">🧩</span>
+      <div class="onboarding-text">
+        <strong>Install an addon to start listening</strong>
+        <p>BeatBoss needs a music source addon. Tap the Addons tab to install one.</p>
+      </div>
+      <button class="btn-primary onboarding-btn">Go to Addons →</button>`;
+    banner.querySelector('.onboarding-btn').addEventListener('click', () => navigate('addons'));
+    container.append(banner);
+  }
+
   // Installed Addons
   const addonSec = document.createElement('section');
   addonSec.innerHTML = '<h3 class="section-title">Active Addon</h3>';
   if (addons.length === 0) {
     const msg = document.createElement('p');
     msg.className = 'empty-hint';
-    msg.textContent = 'No addons installed. Go to Addons tab to install one.';
+    msg.textContent = 'Tap the 🧩 Addons tab above to install a music source.';
     addonSec.append(msg);
   } else {
     const active = addons.find(a => a.id === app.addonStore.activeAddonId) ?? addons[0];
