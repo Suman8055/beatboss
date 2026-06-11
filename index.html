@@ -8,8 +8,8 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="BeatBoss">
-  <link rel="manifest" href="/manifest.webmanifest">
-  <link rel="apple-touch-icon" href="/icons/icon-192.png">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="apple-touch-icon" href="./icons/icon-192.png">
   <title>BeatBoss</title>
 
   <style>
@@ -313,17 +313,17 @@
 </div>
 
 <script type="module">
-  import { setupUnlock }      from '/src/ios-audio-unlock.js';
-  import { SettingsStore, HistoryStore, LibraryStore, AddonStore, DownloadStore, PlayerStore, ImportStore } from '/src/store.js';
-  import { AudioEngine }      from '/src/audio-engine.js';
-  import { AudioPlayerService } from '/src/audio-player.js';
-  import { AddonService }     from '/src/addon-service.js';
-  import { LrcLibHandler }    from '/src/lrclib-handler.js';
-  import { LastFmService }    from '/src/lastfm-service.js';
-  import { ImportService }    from '/src/import-service.js';
-  import { DownloadManager }  from '/src/download-manager.js';
-  import { MediaSessionManager } from '/src/media-session.js';
-  import { initAppShell }     from '/src/ui/app-shell.js';
+  import { setupUnlock }      from './src/ios-audio-unlock.js';
+  import { SettingsStore, HistoryStore, LibraryStore, AddonStore, DownloadStore, PlayerStore, ImportStore } from './src/store.js';
+  import { AudioEngine }      from './src/audio-engine.js';
+  import { AudioPlayerService } from './src/audio-player.js';
+  import { AddonService }     from './src/addon-service.js';
+  import { LrcLibHandler }    from './src/lrclib-handler.js';
+  import { LastFmService }    from './src/lastfm-service.js';
+  import { ImportService }    from './src/import-service.js';
+  import { DownloadManager }  from './src/download-manager.js';
+  import { MediaSessionManager } from './src/media-session.js';
+  import { initAppShell }     from './src/ui/app-shell.js';
 
   // iOS audio unlock — must be first
   setupUnlock();
@@ -379,7 +379,7 @@
 
   // Service Worker registration
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/sw.js').catch(() => {});
+    navigator.serviceWorker.register('./sw.js').catch(() => {});
   }
 </script>
 </body>

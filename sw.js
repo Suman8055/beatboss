@@ -1,34 +1,34 @@
 const CACHE = 'beatboss-v1';
 const SHELL = [
-  '/',
-  '/src/db.js',
-  '/src/store.js',
-  '/src/audio-engine.js',
-  '/src/audio-player.js',
-  '/src/dash-parser.js',
-  '/src/dash-loader.js',
-  '/src/addon-service.js',
-  '/src/lastfm-service.js',
-  '/src/import-service.js',
-  '/src/lrclib-handler.js',
-  '/src/download-manager.js',
-  '/src/media-session.js',
-  '/src/ios-audio-unlock.js',
-  '/src/router.js',
-  '/src/ui/app-shell.js',
-  '/src/ui/home.js',
-  '/src/ui/search.js',
-  '/src/ui/library.js',
-  '/src/ui/downloads.js',
-  '/src/ui/settings.js',
-  '/src/ui/addons.js',
-  '/src/ui/player-bar.js',
-  '/src/ui/lyrics-view.js',
-  '/src/ui/queue-view.js',
-  '/src/ui/components.js',
-  '/manifest.webmanifest',
-  '/icons/icon-192.png',
-  '/icons/icon-512.png',
+  './',
+  './src/db.js',
+  './src/store.js',
+  './src/audio-engine.js',
+  './src/audio-player.js',
+  './src/dash-parser.js',
+  './src/dash-loader.js',
+  './src/addon-service.js',
+  './src/lastfm-service.js',
+  './src/import-service.js',
+  './src/lrclib-handler.js',
+  './src/download-manager.js',
+  './src/media-session.js',
+  './src/ios-audio-unlock.js',
+  './src/router.js',
+  './src/ui/app-shell.js',
+  './src/ui/home.js',
+  './src/ui/search.js',
+  './src/ui/library.js',
+  './src/ui/downloads.js',
+  './src/ui/settings.js',
+  './src/ui/addons.js',
+  './src/ui/player-bar.js',
+  './src/ui/lyrics-view.js',
+  './src/ui/queue-view.js',
+  './src/ui/components.js',
+  './manifest.webmanifest',
+  './icons/icon-192.png',
+  './icons/icon-512.png',
 ];
 
 // Worker proxy domains — always network, never cache
@@ -66,7 +66,7 @@ self.addEventListener('fetch', e => {
           caches.open(CACHE).then(c => c.put(e.request, clone));
         }
         return res;
-      }).catch(() => caches.match('/'));
+      }).catch(() => caches.match('./'));
     })
   );
 });
