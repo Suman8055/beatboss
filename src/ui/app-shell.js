@@ -5,11 +5,13 @@ import { renderLibrary }   from './library.js';
 import { renderDownloads } from './downloads.js';
 import { renderSettings }  from './settings.js';
 import { renderAddons }    from './addons.js';
+import { renderDiscover }  from './discover.js';
 import { renderLyricsView, renderQueueView } from './lyrics-view.js';
 import { PlayerBar }       from './player-bar.js';
 
 const TABS = [
   { id: 'home',      label: 'Home',      icon: '🏠' },
+  { id: 'discover',  label: 'Discover',  icon: '🌐' },
   { id: 'search',    label: 'Search',    icon: '🔍' },
   { id: 'library',   label: 'Library',   icon: '🎵' },
   { id: 'downloads', label: 'Downloads', icon: '⬇' },
@@ -45,6 +47,7 @@ export function initAppShell(app) {
   // Screen renders
   const screenRenderers = {
     home:      c => renderHome(app, c),
+    discover:  c => renderDiscover(app, c),
     search:    c => renderSearch(app, c),
     library:   c => renderLibrary(app, c),
     downloads: c => renderDownloads(app, c),

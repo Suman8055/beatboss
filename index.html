@@ -281,6 +281,20 @@
     .splash-spinner { width: 28px; height: 28px; border: 3px solid var(--border); border-top-color: var(--primary); border-radius: 50%; animation: spin .8s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
 
+    /* ── Discover ──────────────────────────────────────────────────────────── */
+    .discover-chips { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 4px; }
+    .discover-chip {
+      display: flex; align-items: center; gap: 6px;
+      padding: 8px 14px; border-radius: 999px;
+      border: 1.5px solid var(--border); background: var(--card);
+      color: var(--text); font-size: 14px; font-weight: 500;
+      cursor: pointer; transition: border-color .15s, background .15s, color .15s;
+    }
+    .discover-chip:active { opacity: .7; }
+    .discover-chip.active { border-color: var(--primary); background: var(--primary); color: #fff; }
+    .chip-icon  { font-size: 16px; line-height: 1; }
+    .chip-label { white-space: nowrap; }
+
     /* ── Misc ──────────────────────────────────────────────────────────────── */
     .spinner { text-align: center; padding: 24px; font-size: 24px; }
   </style>
